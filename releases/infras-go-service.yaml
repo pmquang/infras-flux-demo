@@ -27,7 +27,12 @@ spec:
     jaeger:
       enabled: false
     minReadySeconds: 5
-    replicaCount: 3
+    hpa:
+      autoscaling:
+        minReplicas: 3
+        maxReplicas: 10
+        enabled: true
+        targetCPUUtilizationPercentage: 50
     resources:
       limits:
         cpu: 700m
