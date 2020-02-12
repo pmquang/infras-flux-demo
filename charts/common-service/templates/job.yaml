@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: {{ template "common-service.fullname" . }}
-        image: {{ .Values.job.repository }}:{{ .Values.job.tag }}
+        image: {{ .Values.job.image.repository }}:{{ .Values.job.image.tag }}
         env:
           - name: placeholder
             value: placeholder

@@ -1,8 +1,9 @@
 
 replicaCount: 1
 
-repository: alpine
-tag: latest
+image:
+  repository: alpine
+  tag: latest
 
 # IAM role for pod
 #awsRole: ""
@@ -20,8 +21,9 @@ amplification:
 
 job:
   enabled: false
-  repository: alpine
-  tag: latest
+  image:
+    repository: alpine
+    tag: latest
   env: []
   command: []
   restartPolicy: Never

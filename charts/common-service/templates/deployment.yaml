@@ -61,7 +61,7 @@ spec:
     {{ end }}
       containers:
         - name: {{ template "common-service.name" . }}
-          image: {{ .Values.repository }}:{{ .Values.tag }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           {{- if .Values.dns_cache.enabled }}
           lifecycle:
             postStart:
@@ -156,7 +156,7 @@ spec:
 
         {{- if .Values.logger.enabled }}
         - name: logger
-          image: {{ .Values.logger.repository }}:{{ .Values.logger.tag }}
+          image: {{ .Values.logger.image.repository }}:{{ .Values.logger.image.tag }}
           env:
             - name: LOG_FOLDER
               value: /logger
@@ -168,7 +168,7 @@ spec:
 ### Dns Cache container
         {{- if .Values.dns_cache.enabled }}
         - name: unbound
-          image: {{ .Values.dns_cache.repository }}:{{ .Values.dns_cache.tag }}
+          image: {{ .Values.dns_cache.image.repository }}:{{ .Values.dns_cache.image.tag }}
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 53
