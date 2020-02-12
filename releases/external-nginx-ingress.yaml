@@ -32,3 +32,13 @@ spec:
         requests:
           cpu: 100m
           memory: 1000Mi
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - nginx-ingress
+              topologyKey: kubernetes.io/hostname
