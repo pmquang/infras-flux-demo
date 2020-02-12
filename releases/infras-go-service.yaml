@@ -32,7 +32,7 @@ spec:
         minReplicas: 3
         maxReplicas: 10
         enabled: true
-        targetCPUUtilizationPercentage: 50
+        averageCPUUtilization: 50
     resources:
       limits:
         cpu: 700m

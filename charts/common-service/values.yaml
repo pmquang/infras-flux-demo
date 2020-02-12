@@ -5,8 +5,7 @@ hpa:
     minReplicas: 1
     maxReplicas: 10
     enabled: false
-    targetCPUUtilizationPercentage: 50
-    targetMemoryUtilizationPercentage: 50
+    averageCPUUtilization: 50
 
 image:
   repository: alpine
