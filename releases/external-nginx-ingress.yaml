@@ -24,7 +24,7 @@ spec:
         repository: quay.io/kubernetes-ingress-controller/nginx-ingress-controller
         tag: "0.28.0"
         pullPolicy: IfNotPresent
-      replicaCount: 3
+      replicaCount: 5
       resources:
         limits:
           cpu: 100m
