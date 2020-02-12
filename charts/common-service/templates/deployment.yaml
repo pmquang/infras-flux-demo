@@ -11,6 +11,11 @@ metadata:
     brand: {{ .Release.Namespace }}
     tier: {{ .Values.tier | default "backend" }}
 spec:
+  selector:
+    matchLabels:
+      app: {{ template "common-service.fullname" . }}
+      release: {{ .Release.Name }}
+      brand: {{ .Release.Namespace }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
