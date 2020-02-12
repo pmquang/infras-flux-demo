@@ -16,10 +16,12 @@ spec:
     rollingUpdate:
       maxUnavailable: 1 # Make sure always has at least n pod (Note : 2 for prod)
       maxSurge: 1
+  {{- if not .Values.controller.autoscaling.enabled }}
   {{- if .Values.amplification.enabled }}
   replicas: {{ .Values.replicas| mul .Values.amplification.number | default 1 }}
   {{- else }}
   replicas: {{ .Values.replicas | default 1 }}
+  {{- end }}
   {{- end }}
   minReadySeconds: {{ .Values.minReadySeconds | default 5 }}
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit | default 3 }}
