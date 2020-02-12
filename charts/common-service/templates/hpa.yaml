@@ -13,7 +13,7 @@ metadata:
     tier: {{ .Values.tier | default "backend" }}
 spec:
   scaleTargetRef:
-    apiVersion: {{ template "deployment.apiVersion" . }}
+    apiVersion: apps/v1
     kind: Deployment
     name: {{ template "common-service.fullname" . }}
   minReplicas: {{ .Values.hpa.autoscaling.minReplicas }}
