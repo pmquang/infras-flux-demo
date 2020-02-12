@@ -7,7 +7,7 @@ tag: latest
 # IAM role for pod
 #awsRole: ""
 
-schedulerName: custom-scheduler
+schedulerName: default-scheduler
 initialDelaySeconds: 60
 minReadySeconds: 5
 
