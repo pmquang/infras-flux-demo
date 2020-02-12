@@ -1,0 +1,42 @@
+{{- if .Values.ingress.enabled }}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "common-service.fullname" . }}
+  labels:
+    app: {{ template "common-service.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    version: {{ .Values.imageVersion | quote }}
+    brand: {{ .Release.Namespace }}
+    tier: {{ .Values.tier | default "backend" }}
+  namespace: {{ .Values.brand }}
+  annotations:
+  {{- if .Values.ingress.annotations }}
+{{ toYaml .Values.ingress.annotations | indent 4 }}
+  {{- end }}
+    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
+    ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Request-Id: $request_id";
+    ingress.kubernetes.io/session-cookie-name: "misfit"
+    ingress.kubernetes.io/session-cookie-hash: "md5"
+    ingress.kubernetes.io/affinity: "cookie"
+    ingress.kubernetes.io/force-ssl-redirect: "true" # for Offload TLS from cloud provider
+spec:
+  rules:
+    {{- range $host := .Values.ingress.hosts }}
+    - host: {{ $host }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: {{ template "common-service.fullname" $ }}
+              servicePort: {{ $.Values.service.externalPort }}
+    {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+{{ toYaml .Values.ingress.tls | indent 4 }}
+  {{- end }}
+{{- end }}

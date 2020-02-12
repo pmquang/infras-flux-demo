@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "common-service.fullname" . }}
+  labels:
+    app: {{ template "common-service.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    version: {{ .Values.imageVersion | quote }}
+    brand: {{ .Release.Namespace }}
+    tier: {{ .Values.tier | default "backend" }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .Values.service.externalPort | default 80 }}
+    targetPort: {{ .Values.service.internalPort | default 80 }}
+    name: http
+{{- if .Values.serviceExt }}
+{{- range .Values.serviceExt }}
+  - port: {{ .externalPort }}
+    targetPort: {{ .internalPort }}
+    name: {{ .name }}
+{{- end }}
+{{- end }}
+  selector:
+    app: {{ template "common-service.fullname" . }}

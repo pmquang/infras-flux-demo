@@ -1,0 +1,21 @@
+{{- if .Values.persistence.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "common-service.fullname" . }}
+  labels:
+    app: {{ template "common-service.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    version: {{ .Values.imageVersion | quote }}
+    brand: {{ .Release.Namespace }}
+    tier: {{ .Values.tier | default "backend" }}
+spec:
+  storageClassName: {{ .Values.persistence.class }}
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+{{- end -}}

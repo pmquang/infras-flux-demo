@@ -1,0 +1,39 @@
+{{- if .Values.job.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "common-service.fullname" . }}-job
+  labels:
+    app: {{ template "common-service.fullname" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    brand: {{ .Release.Namespace }}
+    tier: {{ .Values.tier | default "backend" }}
+  annotations:
+    "helm.sh/hook": "pre-install"
+spec:
+  template:
+    metadata:
+      name: {{ template "common-service.fullname" . }}-job
+    spec:
+      containers:
+      - name: {{ template "common-service.fullname" . }}
+        image: {{ .Values.job.repository }}:{{ .Values.job.tag }}
+        env:
+          - name: placeholder
+            value: placeholder
+          {{- if .Values.job.env }}
+          {{- range .Values.job.env }}
+          - name: {{ .name }}
+            value: {{ .value | quote -}}
+          {{- end }}
+          {{- end }}
+        command:
+{{ toYaml .Values.job.command | indent 8 }}
+      restartPolicy: {{ .Values.job.restartPolicy }}
+{{- if .Values.tolerations }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+{{ end }}
+{{- end }}

@@ -1,0 +1,209 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "common-service.fullname" . }}
+  labels:
+    app: {{ template "common-service.fullname" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    version: {{ .Values.imageVersion | quote }}
+    brand: {{ .Release.Namespace }}
+    tier: {{ .Values.tier | default "backend" }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1 # Make sure always has at least n pod (Note : 2 for prod)
+      maxSurge: 1
+  {{- if .Values.amplification.enabled }}
+  replicas: {{ .Values.replicaCount| mul .Values.amplification.number | default 1 }}
+  {{- else }}
+  replicas: {{ .Values.replicaCount | default 1 }}
+  {{- end }}
+  minReadySeconds: {{ .Values.minReadySeconds | default 5 }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit | default 3 }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "common-service.fullname" . }}
+        release: {{ .Release.Name }}
+        brand: {{ .Release.Namespace }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- if .Values.awsRole }}
+        iam.amazonaws.com/role: {{ .Values.awsRole }}
+      {{- end }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - {{ template "common-service.fullname" . }}
+                - key: brand
+                  operator: In
+                  values:
+                  - {{ .Release.Namespace }}
+              topologyKey: kubernetes.io/hostname
+
+    {{- if .Values.schedulerName }}
+      schedulerName: {{ .Values.schedulerName }}
+    {{- end }}
+
+    {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ template "common-service.fullname" . }}-pullsecret
+    {{ end }}
+      containers:
+        - name: {{ template "common-service.name" . }}
+          image: {{ .Values.repository }}:{{ .Values.tag }}
+          {{- if .Values.dns_cache.enabled }}
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "echo 'nameserver 127.0.0.1' > /etc/resolv.conf"]
+          {{- end }}
+          {{- if .Values.command }}
+          command:
+{{ toYaml .Values.command | indent 12 }}
+          {{- end }}
+          {{- if .Values.args }}
+          args:
+{{ toYaml .Values.args | indent 12 }}
+          {{- end }}
+          env:
+          - name: CPU_REQUEST
+            valueFrom:
+              resourceFieldRef:
+                containerName: {{ template "common-service.name" . }}
+                resource: requests.cpu
+          - name: CPU_LIMIT
+            valueFrom:
+              resourceFieldRef:
+                containerName: {{ template "common-service.name" . }}
+                resource: limits.cpu
+          - name: MEM_REQUEST
+            valueFrom:
+              resourceFieldRef:
+                containerName: {{ template "common-service.name" . }}
+                resource: requests.memory
+          - name: MEM_LIMIT
+            valueFrom:
+              resourceFieldRef:
+                containerName: {{ template "common-service.name" . }}
+                resource: limits.memory
+          - name: placeholder
+            value: placeholder
+          {{- if .Values.env }}
+          {{- range .Values.env }}
+          - name: {{ .name }}
+            value: {{ .value | quote -}}
+          {{- end }}
+          {{- end }}
+          {{ if .Values.secret }}
+          {{- range .Values.secret }}
+          - name: {{ .name }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "common-service.fullname" $ }}
+                key: {{ .name }}
+          {{- end }}
+          {{- end }}
+          ports:
+          - containerPort: {{ .Values.service.internalPort | default 80 }}
+          {{- range tuple "livenessProbe" "readinessProbe" }}
+          {{ . }}:
+            {{- if eq $.Values.healthcheck.method "http" }}
+            httpGet:
+              path: {{ $.Values.healthcheck.path }}
+            {{- else }}
+            tcpSocket:
+            {{- end }}
+              port: {{ $.Values.service.internalPort | default 80 }}
+            initialDelaySeconds: {{ $.Values.initialDelaySeconds | default 5 }}
+            timeoutSeconds: {{ $.Values.timeoutSeconds | default 5 }}
+            periodSeconds: {{ $.Values.periodSeconds | default 5 }}
+            failureThreshold: {{ $.Values.failureThreshold | default 3 }}
+            successThreshold: {{ $.Values.successThreshold | default 1 }}
+          {{- end }} # range tuple "livenessProbe" "readinessProbe"
+          volumeMounts:
+          - name: placeholder
+            mountPath: /tmp/placeholder
+          {{- if .Values.persistence.enabled }}
+          - name: {{ template "common-service.fullname" $ }}
+            mountPath: {{ .Values.persistence.path }}
+          {{- end }}
+          {{- if .Values.configFiles }}
+          {{- range $fileName, $fileAttr := .Values.configFiles }}
+          - name: {{ template "common-service.fullname" $ }}
+            mountPath: {{ $fileAttr.path }}
+            subPath: {{ $fileName }}
+          {{- end }}
+          {{- end }}
+          {{- if .Values.logger.enabled }}
+          - name: logger
+            mountPath: {{ .Values.logger.logPath }}
+          {{- end }}
+{{- if .Values.resources }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+{{ end }}
+
+        {{- if .Values.logger.enabled }}
+        - name: logger
+          image: {{ .Values.logger.repository }}:{{ .Values.logger.tag }}
+          env:
+            - name: LOG_FOLDER
+              value: /logger
+          volumeMounts:
+            - mountPath: /logger/
+              name: logger
+        {{- end }}
+
+### Dns Cache container
+        {{- if .Values.dns_cache.enabled }}
+        - name: unbound
+          image: {{ .Values.dns_cache.repository }}:{{ .Values.dns_cache.tag }}
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 53
+          volumeMounts:
+          - name: "unbound-conf"
+            mountPath: "/etc/unbound/"
+            readOnly: false
+        {{- end }}
+
+      volumes:
+      {{- if .Values.dns_cache.enabled }}
+      - name: "unbound-conf"
+        configMap:
+          name: unbound
+      {{- end }}
+      - name: placeholder
+        emptyDir: {}
+      {{- if .Values.logger.enabled }}
+      - name: logger
+        emptyDir: {}
+      #- name: logger-config
+      #  configMap:
+      #    name: {{ template "common-service.fullname" . }}-logger-config
+      {{- end }}
+      {{- if .Values.persistence.enabled }}
+      - name: {{ template "common-service.fullname" $ }}
+        persistentVolumeClaim:
+          claimName: {{ template "common-service.fullname" $ }}
+      {{- end }}
+      {{- if .Values.configFiles }}
+      - name: {{ template "common-service.fullname" $ }}
+        configMap:
+          name: {{ template "common-service.fullname" $ }}
+      {{- end }} # file .Values.configFiles
+{{- if .Values.tolerations }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+{{ end }}

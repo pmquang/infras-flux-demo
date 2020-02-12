@@ -1,0 +1,92 @@
+
+replicaCount: 1
+
+repository: alpine
+tag: latest
+
+# IAM role for pod
+#awsRole: ""
+
+schedulerName: custom-scheduler
+initialDelaySeconds: 60
+minReadySeconds: 5
+
+dns_cache:
+  enabled: false
+
+amplification:
+  enabled: false
+  number: 1
+
+job:
+  enabled: false
+  repository: alpine
+  tag: latest
+  env: []
+  command: []
+  restartPolicy: Never
+
+healthcheck:
+  method: http
+  path: /ping
+
+service:
+  externalPort: 80
+  internalPort: 9000
+
+ingress:
+  enabled: false
+  class: "internal-facing"
+  hosts: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 250Mi
+  limits:
+    cpu: 300m
+    memory: 512Mi
+
+# Environment variables
+# env:
+# - name: foo
+#   value: bar
+# secret:
+# - name: bar
+#   value: foo
+env:
+  - name: foo
+    value: bar
+secret:
+  - name: bar
+    value: foo
+
+# a list  of configuration file to be mounted to pod
+# configFiles:
+#   foo:
+#     path: /path/to/foo
+#     content: |
+#       var_one = foo
+#       var_two = bar
+
+# TODO: add secretFile var
+#secretFile: {}
+
+persistence:
+  enabled: false
+  size: 1Gi
+  class: default
+  accessMode: ReadWriteOnce
+  path: /foo/bar
+
+# logger is a sidecar container which scrape your log files then print it to stdout
+logger:
+  enabled: false
+  logPath: /src/log
+
+# Charts which this chart depends on
+# New added charts also need to be added to requirements.yaml
+mongos:
+  enabled: false
+jaeger:
+  enabled: false
