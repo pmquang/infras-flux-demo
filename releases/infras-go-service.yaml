@@ -23,10 +23,10 @@ spec:
       enabled: true
       hosts:
       - infras-go-service.example.com
-    initialDelaySeconds: 60
+    initialDelaySeconds: 5
     jaeger:
       enabled: false
-    minReadySeconds: 5
+    minReadySeconds: 1
     hpa:
       autoscaling:
         minReplicas: 3
