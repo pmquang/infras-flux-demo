@@ -35,6 +35,8 @@ spec:
       requests:
         cpu: 300m
         memory: 512Mi
+    healthcheck:
+      method: tcp
     secret:
     - name: bar
       value: foo
