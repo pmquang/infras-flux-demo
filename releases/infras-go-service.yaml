@@ -14,6 +14,7 @@ spec:
     ref: master
     path: charts/common-service
   values:
+    schedulerName: default-scheduler
     image:
       repository: 922326500294.dkr.ecr.ap-southeast-1.amazonaws.com/backend/infras-go-service
       tag: 1.0.0
