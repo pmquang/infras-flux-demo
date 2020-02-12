@@ -2,10 +2,10 @@ dependencies:
   - name: mongos
     version: 0.1.0
     #repository: http://127.0.0.1:8879/charts
-    repository: "file://../../../charts-repo/mongos"
+    repository: "file://../../charts-repo/mongos"
     condition: mongos.enabled
   - name: jaeger
     version: 0.1.0
     #repository: http://127.0.0.1:8879/charts
-    repository: "file://../../../charts-repo/jaeger"
+    repository: "file://../../charts-repo/jaeger"
     condition: jaeger.enabled
